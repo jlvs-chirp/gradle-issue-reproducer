@@ -1,4 +1,4 @@
-import org.gradle.execution.plan.ExecutionPlan
+import org.gradle.internal.DefaultTaskExecutionRequest
 
 abstract class GreetingTask : DefaultTask() {
     @TaskAction
@@ -7,12 +7,17 @@ abstract class GreetingTask : DefaultTask() {
     }
 }
 
-val taskProvider = tasks.register<GreetingTask>("hello")
+val taskProvider = tasks.register<GreetingTask>("hello") {
 
-gradle.taskGraph.whenReady {
-    withGroovyBuilder {
-            val executionPlan: ExecutionPlan = getProperty("executionPlan") as ExecutionPlan
-            executionPlan.addEntryTasks(listOf(taskProvider.get()))
-            executionPlan.determineExecutionPlan()
-    }
 }
+
+
+fun addTaskToTaskGraph(taskProvider: TaskProvider<*>) {
+    gradle.startParameter.setTaskRequests(
+        gradle.startParameter.taskRequests + DefaultTaskExecutionRequest(listOf("$path:${taskProvider.name}"))
+    )
+}
+
+//gradle.startParameter.setTaskRequests(gradle.startParameter.taskRequests + DefaultTaskExecutionRequest(listOf("$path:${taskProvider.name}")))
+addTaskToTaskGraph(taskProvider)
+
